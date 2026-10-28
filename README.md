@@ -1,40 +1,16 @@
-# PostIt - MERN Project Group 4
-## PostIt Frontend
+# React + Vite
 
-### Initial Setup
-In your terminal directory
-```
-mkdir PostIt
-cd ./PostIt
-git clone git@github.com:arielfevry/postit-backend.git
-git clone git@github.com:arielfevry/postit-frontend.git
-```
-- If you are using WSL, you can then use "code ." to open an IDE like VSCode 
-- If not, you can use your editor from your desktop and use git clone in your workspace
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-### Pushing and Pulling code
+Currently, two official plugins are available:
 
-When making any changes to the repository files, make sure to check out a branch to your local machine using this command:
-```bash
-git checkout -b <your-branch-name>
-git pull # when making changes, make sure to pull often to remain up-to-date
-```
-You can then make your changes, stage them, commit, and push to main. 
-```bash
-git add <file-name> or . # "git add ." stages all modifications
-git commit -m "commit message"
-git push
-```
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-###  Commit Framework
-- "feat: (explanation of new feature added)"
-- "fix: (what the commit is fixing)"
-- "style: (formatting, typo changes)"
-- "tests: (adding tests and what they are)"
+## React Compiler
 
-### Accessing the Droplet
-Since we're not coding directly on the droplet through repo branches, we can SSH as root (Only When Necessary)
-```
-ssh root@postit.arielfevry.com
-```
-No password is needed since you're authenticated with your ssh key
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
