@@ -12,5 +12,5 @@ export default function App() {
       .catch(() => setStatus('API unreachable'));
   }, []);
 
-  return <h1>PostIt! {status}</h1>;
+  return <h1>Testing PostIt! {status}</h1>;
 }
