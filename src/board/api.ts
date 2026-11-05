@@ -10,7 +10,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
     });
   } catch {
-    throw new Error('Could not reach the PostIt! server. Is the backend running?');
+    throw new Error('Could not reach the PostIt! server.');
   }
   const data = (await res.json().catch(() => ({}))) as { error?: string };
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
