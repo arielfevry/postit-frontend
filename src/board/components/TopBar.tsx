@@ -9,7 +9,8 @@ interface Props {
   openReminders: number;
   onHome: () => void;
   onSettings: () => void;
-  onRename: (title: string) => void;
+  /** omitted when the user can't rename (only the owner can) */
+  onRename?: (title: string) => void;
   onToggleReminders: () => void;
   onSignOut: () => void;
 }
@@ -33,7 +34,7 @@ export default function TopBar(props: Props) {
   const commit = () => {
     setEditing(false);
     const t = draft.trim();
-    if (t && t !== title) props.onRename(t);
+    if (t && t !== title) props.onRename?.(t);
     else setDraft(title);
   };
 
@@ -70,6 +71,8 @@ export default function TopBar(props: Props) {
             }}
             aria-label="Board title"
           />
+        ) : !props.onRename ? (
+          <span className="pb-title__text pb-title__text--static">{title}</span>
         ) : (
           <button
             type="button"

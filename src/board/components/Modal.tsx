@@ -10,7 +10,7 @@ interface Props {
   size?: 'sm' | 'lg';
 }
 
-/** Bootstrap-styled modal rendered by React (no Bootstrap JS needed). */
+/** Bootstrap-styled modal rendered by React */
 export default function Modal({ title, onClose, children, footer, size }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);

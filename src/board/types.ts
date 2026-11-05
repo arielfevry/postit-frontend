@@ -14,6 +14,8 @@ export interface Board {
   title: string;
   /** "preset:cork" | "preset:metal" | "preset:dots" | "preset:chalk" | an image URL */
   background_image: string;
+  /** only the owner can rename or delete the board */
+  ownerId?: string;
   userIds: string[];
   createdAt?: string;
   updatedAt?: string;

@@ -151,6 +151,11 @@
 .pb-title__text {
   cursor: text;
 }
+.pb-title__text--static,
+.pb-title__text--static:hover {
+  cursor: default;
+  text-decoration: none;
+}
 .pb-title__text:hover {
   text-decoration: underline dotted;
   text-underline-offset: 4px;
@@ -335,7 +340,7 @@
   position: absolute;
   left: calc(100% + 10px);
   top: 120px;
-  width: 260px;
+  width: 312px;
   padding: 12px;
   background: var(--pb-card);
   border-radius: 6px;

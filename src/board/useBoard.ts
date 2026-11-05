@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api } from './api';
+import { api, AuthError } from './api';
 import type { AnyItem, Board, ContentPatch, NewItem, User } from './types';
 import { isCanvasItem, isReminder } from './types';
 
@@ -8,19 +8,37 @@ const SAVE_DELAY = 450;
 export type LoadState = 'loading' | 'ready' | 'error' | 'deleted';
 
 /**
- * Loads one board and its items and keeps them in sync with the API.
- * Edits update local state straight away; content changes are batched per item
- * and only the changed fields are PATCHed after a short pause.
+ * Loads one board (GET /api/boards/:id) and its items (GET /api/items?boardId=)
+ * and keeps them in sync with the API.
+ *
+ * Edits update local state straight away. Because PUT /api/items/:id replaces
+ * the whole content, changes to an item are batched for a short pause and
+ * then its full current content is sent. Saves for the same item run one at
+ * a time so an older save can never land after a newer one.
  */
-export function useBoard(boardId: string, user: User) {
+export function useBoard(boardId: string, user: User, onAuthError: () => void) {
   const [board, setBoard] = useState<Board | null>(null);
   const [items, setItems] = useState<AnyItem[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [error, setError] = useState<string | null>(null);
   const [inFlight, setInFlight] = useState(0);
 
-  const pending = useRef(new Map<string, ContentPatch>());
+  const itemsRef = useRef(items);
+  const dirty = useRef(new Set<string>());
   const timers = useRef(new Map<string, number>());
+  const saveChains = useRef(new Map<string, Promise<unknown>>());
+  const onAuthErrorRef = useRef(onAuthError);
+
+  useEffect(() => {
+    itemsRef.current = items;
+    onAuthErrorRef.current = onAuthError;
+  });
+
+  /** Routes auth failures to the sign-in screen; everything else to the error toast. */
+  const fail = useCallback((prefix: string, e: unknown) => {
+    if (e instanceof AuthError) onAuthErrorRef.current();
+    else setError(`${prefix}${(e as Error).message}`);
+  }, []);
 
   /* ---------- load ---------- */
   useEffect(() => {
@@ -34,6 +52,7 @@ export function useBoard(boardId: string, user: User) {
       })
       .catch((e: Error) => {
         if (cancelled) return;
+        if (e instanceof AuthError) return onAuthErrorRef.current();
         setError(e.message);
         setLoadState('error');
       });
@@ -57,12 +76,23 @@ export function useBoard(boardId: string, user: User) {
       const t = timers.current.get(id);
       if (t) window.clearTimeout(t);
       timers.current.delete(id);
-      const patch = pending.current.get(id);
-      pending.current.delete(id);
-      if (!patch || id.startsWith('tmp-')) return;
-      track(api.updateItem(id, patch, keepalive)).catch((e: Error) => setError(`Couldn't save: ${e.message}`));
+      if (!dirty.current.delete(id)) return;
+
+      const save = async () => {
+        // read the content when this save actually starts, so it's the newest
+        const item = itemsRef.current.find((it) => it._id === id);
+        if (!item) return; // deleted in the meantime
+        await track(api.updateItem(id, item.content, keepalive));
+      };
+      const chain = (saveChains.current.get(id) ?? Promise.resolve())
+        .then(save)
+        .catch((e) => fail('Couldn’t save: ', e));
+      saveChains.current.set(id, chain);
+      chain.finally(() => {
+        if (saveChains.current.get(id) === chain) saveChains.current.delete(id);
+      });
     },
-    [track],
+    [track, fail],
   );
 
   // Send anything unsaved when the tab closes or the board unmounts.
@@ -84,7 +114,7 @@ export function useBoard(boardId: string, user: User) {
       setItems((prev) =>
         prev.map((it) => (it._id === id ? ({ ...it, content: { ...it.content, ...patch } } as AnyItem) : it)),
       );
-      pending.current.set(id, { ...pending.current.get(id), ...patch });
+      dirty.current.add(id);
       const t = timers.current.get(id);
       if (t) window.clearTimeout(t);
       timers.current.set(
@@ -102,11 +132,11 @@ export function useBoard(boardId: string, user: User) {
         setItems((prev) => [...prev, item]);
         return item;
       } catch (e) {
-        setError(`Couldn't add that: ${(e as Error).message}`);
+        fail('Couldn’t add that: ', e);
         return null;
       }
     },
-    [boardId, user.id, track],
+    [boardId, user.id, track, fail],
   );
 
   const removeItem = useCallback(
@@ -114,44 +144,66 @@ export function useBoard(boardId: string, user: User) {
       const t = timers.current.get(id);
       if (t) window.clearTimeout(t);
       timers.current.delete(id);
-      pending.current.delete(id);
-      let removed: AnyItem | undefined;
-      setItems((prev) => {
-        removed = prev.find((it) => it._id === id);
-        return prev.filter((it) => it._id !== id);
-      });
+      dirty.current.delete(id);
+      const removed = itemsRef.current.find((it) => it._id === id);
+      setItems((prev) => prev.filter((it) => it._id !== id));
       try {
+        await saveChains.current.get(id); // let an in-progress save finish first
         await track(api.deleteItem(id));
       } catch (e) {
-        setError(`Couldn't delete: ${(e as Error).message}`);
-        if (removed) {
-          const restore = removed;
-          setItems((prev) => [...prev, restore]);
-        }
+        fail('Couldn’t delete: ', e);
+        if (removed) setItems((prev) => [...prev, removed]);
       }
     },
-    [track],
+    [track, fail],
   );
 
   /* ---------- board ---------- */
   const updateBoard = useCallback(
     async (patch: Partial<Pick<Board, 'title' | 'background_image'>>) => {
+      const previous = board;
       setBoard((b) => (b ? { ...b, ...patch } : b));
       try {
         const { board: saved } = await track(api.updateBoard(boardId, patch));
         setBoard(saved);
       } catch (e) {
-        setError(`Couldn't update the board: ${(e as Error).message}`);
+        if (previous) setBoard(previous);
+        fail('Couldn’t update the board: ', e);
       }
     },
-    [boardId, track],
+    [board, boardId, track, fail],
   );
 
+  /**
+   * The API only deletes an empty board, so every item (notes, media,
+   * stickers and reminders) is deleted first, then the board itself.
+   * Throws so the settings dialog can show what went wrong.
+   */
   const deleteBoard = useCallback(async () => {
     for (const t of timers.current.values()) window.clearTimeout(t);
     timers.current.clear();
-    pending.current.clear();
-    await track(api.deleteBoard(boardId));
+    dirty.current.clear();
+    await Promise.allSettled(saveChains.current.values());
+
+    try {
+      const { items: remaining } = await track(api.getItems(boardId));
+      for (let i = 0; i < remaining.length; i += 6) {
+        const batch = remaining.slice(i, i + 6);
+        await Promise.all(
+          batch.map((it) =>
+            track(api.deleteItem(it._id)).catch((e: Error) => {
+              if (!/not found/i.test(e.message)) throw e; // already gone is fine
+            }),
+          ),
+        );
+        const gone = new Set(batch.map((it) => it._id));
+        setItems((prev) => prev.filter((it) => !gone.has(it._id)));
+      }
+      await track(api.deleteBoard(boardId));
+    } catch (e) {
+      if (e instanceof AuthError) onAuthErrorRef.current();
+      throw e;
+    }
     setLoadState('deleted');
   }, [boardId, track]);
 

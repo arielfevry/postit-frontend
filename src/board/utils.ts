@@ -57,41 +57,59 @@ export function measureImage(src: string): Promise<{ width: number; height: numb
 }
 
 /**
- * Reads an uploaded image into a data URL, downscaled so it stays small enough
- * to store on the item (the API accepts up to 10mb per request). GIFs are kept
- * as-is so they still animate.
+ * Largest data URL an image item can hold. The API accepts JSON bodies up to
+ * Express's default 100kb, and every save sends the item's full content.
  */
-export async function fileToDataUrl(
-  file: File,
-  maxDim = 1400,
-): Promise<{ src: string; width: number; height: number }> {
-  const readRaw = () =>
-    new Promise<string>((resolve, reject) => {
+export const MAX_IMAGE_DATA_URL = 80_000;
+
+/**
+ * Reads an uploaded image into a data URL small enough to store on the item:
+ * it is downscaled and re-encoded, stepping quality and size down until it
+ * fits MAX_IMAGE_DATA_URL. GIFs/SVGs are kept as-is (so GIFs still animate)
+ * and must already be small enough.
+ */
+export async function fileToDataUrl(file: File): Promise<{ src: string; width: number; height: number }> {
+  const tooBig = 'That image is too large to save on a board (max about 60 KB for GIFs and SVGs). Try a smaller file or paste an image link instead.';
+
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') {
+    const src = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
       reader.onerror = () => reject(new Error('Could not read that file'));
       reader.readAsDataURL(file);
     });
-
-  if (file.type === 'image/gif' || file.type === 'image/svg+xml') {
-    if (file.size > 4 * 1024 * 1024) throw new Error('That GIF is too large (max 4 MB)');
-    const src = await readRaw();
+    if (src.length > MAX_IMAGE_DATA_URL) throw new Error(tooBig);
     const size = (await measureImage(src)) ?? { width: 300, height: 300 };
     return { src, ...size };
   }
 
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error('That file couldn’t be read as an image.');
+  }
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not process that image');
-  ctx.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-  return { src: canvas.toDataURL('image/webp', 0.85), width, height };
+
+  try {
+    // On a board, photos show at ~300px, so 900px is plenty even when zoomed in.
+    for (const maxDim of [900, 700, 520, 400]) {
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.82, 0.7, 0.58]) {
+        const src = canvas.toDataURL('image/webp', quality);
+        if (src.length <= MAX_IMAGE_DATA_URL) return { src, width: canvas.width, height: canvas.height };
+      }
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new Error('That image couldn’t be compressed enough to save. Try a smaller one or paste an image link.');
 }
 
 /** Fits a natural size into a box no larger than `max` on its long side. */

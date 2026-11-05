@@ -13,9 +13,25 @@ import BoardPage from './board';
 <BoardPage boardId={id} onHome={fn} /> // controlled by a router
 ```
 
-`App.jsx` currently renders it for any `/board…` URL. It expects the signed-in user in
-`localStorage.user` (the `{ id, name, email }` object `/api/login` returns). If no user is found, it shows a small
-stand-in sign-in form (`components/SignInGate.tsx`), which can be removed once the real login page stores the user the same way.
+`App.jsx` currently renders it for any `/board…` URL.
+
+### Signing in (for the login page)
+
+The board routes (`/api/boards`) use HTTP Basic auth, so every board request has to carry the user's
+email and password. The board reads:
+
+- `localStorage.user`: the `{ id, name, email }` object `/api/login` returns
+- `sessionStorage['postit.auth']`: `"Basic " + base64(email + ":" + password)`, which is cleared when the tab closes
+
+After a successful `/api/login`, the login page can store both with one call:
+
+```js
+import { saveSession } from './board/user';
+saveSession(user, email, password);
+```
+
+If either is missing, or the API answers 401, the board shows a small stand-in sign-in form
+(`components/SignInGate.tsx`) that does the same thing.
 
 ## Storage
 
@@ -32,9 +48,19 @@ Everything is saved with the existing `Item` model; position, size, rotation and
 
 Board background is `Board.background_image`: `preset:cork|metal|dots|chalk` or an image URL.
 
-API (backend `routes/boards.js`): `GET/POST /api/boards`, `GET/PATCH/DELETE /api/boards/:id`,
-`GET/POST /api/boards/:id/items`, `PATCH/DELETE /api/items/:id`. Item PATCHes send only the changed
-`content` fields, and the server merges them into the stored content.
+API used:
+
+| | |
+|---|---|
+| Boards (Basic auth) | `POST /api/boards`, `GET/PATCH/DELETE /api/boards/:boardId`. Only the owner can PATCH or DELETE |
+| Items | `GET /api/items?boardId=`, `POST /api/items`, `PUT /api/items/:id`, `DELETE /api/items/:id` |
+
+- `PUT /api/items/:id` replaces the whole `content`, so edits are batched for about 0.5s and the item's full
+  content is sent. Saves for the same item run one at a time, in order.
+- `DELETE /api/boards/:boardId` refuses a board that still has items, so deleting a board deletes all of its items
+  (including reminders) first.
+- The API accepts request bodies up to 100kb, so uploaded images are downscaled and re-encoded to under about
+  80KB. GIFs and SVGs, which are kept as-is to stay animated, must already be that small. Linked images have no size limit.
 
 ## Controls
 

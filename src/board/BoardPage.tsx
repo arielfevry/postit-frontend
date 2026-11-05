@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api } from './api';
+import { api, AuthError } from './api';
 import { useBoard } from './useBoard';
-import { clearStoredUser, getStoredUser } from './user';
+import { clearAuth, clearSession, getAuthHeader, getStoredUser } from './user';
 import type { CanvasItem, ContentPatch, NewItem, NoteVariant, User, Viewport } from './types';
 import {
   fetchYouTubeTitle,
@@ -9,6 +9,7 @@ import {
   fitSize,
   isTypingTarget,
   looksLikeImageUrl,
+  MAX_IMAGE_DATA_URL,
   measureImage,
   parseYouTubeId,
 } from './utils';
@@ -41,8 +42,12 @@ function boardIdFromPath(): string | null {
 /*  Entry: makes sure there's a user and a board id, then shows it    */
 /* ================================================================== */
 
+/** Signed in = we know the user AND hold their credential for this tab. */
+const signedInUser = () => (getAuthHeader() ? getStoredUser() : null);
+
 export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault }: BoardPageProps) {
-  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [user, setUser] = useState<User | null>(signedInUser);
+  const [signInMessage, setSignInMessage] = useState<string | null>(null);
   const [boardId, setBoardId] = useState<string | null>(boardIdProp ?? boardIdFromPath());
   const [createError, setCreateError] = useState<string | null>(null);
   const creating = useRef(false);
@@ -51,23 +56,39 @@ export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault
     if (boardIdProp) setBoardId(boardIdProp);
   }, [boardIdProp]);
 
-  // No id in the URL: create a fresh board (handy until the dashboard links here).
+  // No id in the URL: create a fresh board (until the dashboard links here).
   useEffect(() => {
     if (!user || boardId || creating.current) return;
     creating.current = true;
     api
-      .createBoard('Untitled board', user.id)
+      .createBoard('Untitled board')
       .then(({ board }) => {
         window.history.replaceState(null, '', `/board/${board._id}`);
         setBoardId(board._id);
       })
-      .catch((e: Error) => setCreateError(e.message))
+      .catch((e: Error) => {
+        if (e instanceof AuthError) {
+          clearAuth();
+          setSignInMessage(e.message);
+          setUser(null);
+        } else setCreateError(e.message);
+      })
       .finally(() => {
         creating.current = false;
       });
   }, [user, boardId]);
 
-  if (!user) return <SignInGate onSignedIn={setUser} />;
+  if (!user)
+    return (
+      <SignInGate
+        message={signInMessage}
+        initialEmail={getStoredUser()?.email ?? ''}
+        onSignedIn={(u) => {
+          setSignInMessage(null);
+          setUser(u);
+        }}
+      />
+    );
   if (createError) return <BoardMessage title="Couldn’t create a board" detail={createError} onHome={onHome} />;
   if (!boardId) return <BoardMessage title="Setting up your board…" spinner />;
 
@@ -78,7 +99,12 @@ export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault
       user={user}
       onHome={onHome}
       onSignOut={() => {
-        clearStoredUser();
+        clearSession();
+        setUser(null);
+      }}
+      onAuthError={() => {
+        clearAuth();
+        setSignInMessage('Your session has expired. Please sign in again.');
         setUser(null);
       }}
     />
@@ -143,10 +169,12 @@ interface ViewProps {
   user: User;
   onHome: () => void;
   onSignOut: () => void;
+  /** a request came back 401: the stored credential is missing or wrong */
+  onAuthError: () => void;
 }
 
-function BoardView({ boardId, user, onHome, onSignOut }: ViewProps) {
-  const b = useBoard(boardId, user);
+function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps) {
+  const b = useBoard(boardId, user, onAuthError);
   const { board, canvasItems, reminders, maxZ } = b;
 
   const savedViewport = useRef(loadViewport(boardId));
@@ -249,6 +277,8 @@ function BoardView({ boardId, user, onHome, onSignOut }: ViewProps) {
 
   const addImageFromUrl = useCallback(
     async (url: string, caption = '', at?: { x: number; y: number }) => {
+      if (url.startsWith('data:') && url.length > MAX_IMAGE_DATA_URL)
+        throw new Error('That image is too large to save on a board. Try a smaller one or paste an image link.');
       const size = await measureImage(url);
       if (!size) throw new Error('That image couldn’t be loaded. Check the link points straight to an image.');
       await addImage(url, size.width, size.height, caption, at);
@@ -408,6 +438,8 @@ function BoardView({ boardId, user, onHome, onSignOut }: ViewProps) {
     return <BoardMessage title="Couldn’t open this board" detail={b.error ?? undefined} onHome={onHome} />;
 
   const openReminders = reminders.filter((r) => !r.content.done).length;
+  // boards created before ownerId existed have none; let the server decide then
+  const isOwner = !board.ownerId || board.ownerId === user.id;
 
   return (
     <div className="pb-app pb-board">
@@ -418,7 +450,7 @@ function BoardView({ boardId, user, onHome, onSignOut }: ViewProps) {
         openReminders={openReminders}
         onHome={onHome}
         onSettings={() => setModal('settings')}
-        onRename={(title) => b.updateBoard({ title })}
+        onRename={isOwner ? (title) => b.updateBoard({ title }) : undefined}
         onToggleReminders={() => setRemindersOpen((o) => !o)}
         onSignOut={onSignOut}
       />
@@ -489,6 +521,7 @@ function BoardView({ boardId, user, onHome, onSignOut }: ViewProps) {
         <SettingsModal
           board={board}
           itemCount={canvasItems.length + reminders.length}
+          isOwner={isOwner}
           onClose={() => setModal(null)}
           onSave={(patch) => b.updateBoard(patch)}
           onDelete={b.deleteBoard}

@@ -9,10 +9,13 @@ interface Props {
   itemCount: number;
   onClose: () => void;
   onSave: (patch: Partial<Pick<Board, 'title' | 'background_image'>>) => void;
+  /** Deletes every item, then the board. */
   onDelete: () => Promise<void>;
+  /** Only the owner may rename, restyle or delete the board. */
+  isOwner: boolean;
 }
 
-export default function SettingsModal({ board, itemCount, onClose, onSave, onDelete }: Props) {
+export default function SettingsModal({ board, itemCount, onClose, onSave, onDelete, isOwner }: Props) {
   const current = board.background_image || 'preset:cork';
   const isCustom = !current.startsWith('preset:');
   const [title, setTitle] = useState(board.title);
@@ -55,13 +58,19 @@ export default function SettingsModal({ board, itemCount, onClose, onSave, onDel
           <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" form="pb-settings-form" className="btn btn-dark btn-sm" disabled={!canSave}>
+          <button type="submit" form="pb-settings-form" className="btn btn-dark btn-sm" disabled={!canSave || !isOwner}>
             Save changes
           </button>
         </>
       }
     >
+      {!isOwner && (
+        <div className="alert alert-secondary py-2 small">
+          Only the board’s owner can change these settings or delete the board.
+        </div>
+      )}
       <form id="pb-settings-form" onSubmit={save}>
+        <fieldset disabled={!isOwner} className="border-0 p-0 m-0">
         <div className="mb-3">
           <label htmlFor="pb-board-title" className="form-label small fw-semibold">
             Board title
@@ -119,33 +128,38 @@ export default function SettingsModal({ board, itemCount, onClose, onSave, onDel
             />
           )}
         </fieldset>
+        </fieldset>
       </form>
 
-      <hr />
+      {isOwner && <hr />}
 
-      <div className="pb-danger">
-        <div>
-          <div className="fw-semibold small text-danger">Delete board</div>
-          <div className="small text-body-secondary">
-            Permanently removes this board and its {itemCount} item{itemCount === 1 ? '' : 's'}. This can’t be undone.
+      {isOwner && (
+        <>
+          <div className="pb-danger">
+            <div>
+              <div className="fw-semibold small text-danger">Delete board</div>
+              <div className="small text-body-secondary">
+                Permanently removes this board and its {itemCount} item{itemCount === 1 ? '' : 's'}. This can’t be undone.
+              </div>
+            </div>
+            {!confirming ? (
+              <button type="button" className="btn btn-outline-danger btn-sm flex-shrink-0" onClick={() => setConfirming(true)}>
+                Delete board
+              </button>
+            ) : (
+              <div className="d-flex gap-2 flex-shrink-0">
+                <button type="button" className="btn btn-light btn-sm" onClick={() => setConfirming(false)} disabled={deleting}>
+                  Keep it
+                </button>
+                <button type="button" className="btn btn-danger btn-sm" onClick={doDelete} disabled={deleting}>
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-        {!confirming ? (
-          <button type="button" className="btn btn-outline-danger btn-sm flex-shrink-0" onClick={() => setConfirming(true)}>
-            Delete board
-          </button>
-        ) : (
-          <div className="d-flex gap-2 flex-shrink-0">
-            <button type="button" className="btn btn-light btn-sm" onClick={() => setConfirming(false)} disabled={deleting}>
-              Keep it
-            </button>
-            <button type="button" className="btn btn-danger btn-sm" onClick={doDelete} disabled={deleting}>
-              {deleting ? 'Deleting…' : 'Yes, delete'}
-            </button>
-          </div>
-        )}
-      </div>
-      {deleteError && <div className="alert alert-danger py-2 small mt-2 mb-0">{deleteError}</div>}
+          {deleteError && <div className="alert alert-danger py-2 small mt-2 mb-0">{deleteError}</div>}
+        </>
+      )}
     </Modal>
   );
 }

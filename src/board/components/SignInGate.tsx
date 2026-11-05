@@ -2,18 +2,26 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { api } from '../api';
 import type { User } from '../types';
-import { storeUser } from '../user';
+import { saveSession } from '../user';
 
 /**
- * Minimal sign-in shown only when nobody is signed in, so the board can be
- * tested on its own. Swap this for the real login page once it exists — it
- * uses the same /api/login and /api/register endpoints and stores the user
- * the same way.
+ * Minimal sign-in shown when the board has no credential for this tab (the
+ * board routes need the email + password on every request), so the board can
+ * be tested on its own. Once the real login page calls saveSession() after
+ * /api/login, this only appears when a session expires.
  */
-export default function SignInGate({ onSignedIn }: { onSignedIn: (user: User) => void }) {
+export default function SignInGate({
+  onSignedIn,
+  message,
+  initialEmail = '',
+}: {
+  onSignedIn: (user: User) => void;
+  message?: string | null;
+  initialEmail?: string;
+}) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +33,7 @@ export default function SignInGate({ onSignedIn }: { onSignedIn: (user: User) =>
     try {
       const { user } =
         mode === 'login' ? await api.login(email, password) : await api.register(name, email, password);
-      storeUser(user);
+      saveSession(user, email, password);
       onSignedIn(user);
     } catch (err) {
       setError((err as Error).message);
@@ -41,6 +49,7 @@ export default function SignInGate({ onSignedIn }: { onSignedIn: (user: User) =>
         <p className="small text-body-secondary mb-3">
           {mode === 'login' ? 'Sign in to open your board.' : 'Create an account to start pinning.'}
         </p>
+        {message && mode === 'login' && <div className="alert alert-warning py-2 small">{message}</div>}
         {mode === 'register' && (
           <div className="mb-2">
             <label className="form-label small mb-1" htmlFor="pb-name">Name</label>
