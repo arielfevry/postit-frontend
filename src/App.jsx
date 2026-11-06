@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
+import Login from './pages/Login';
 
 const API = import.meta.env.VITE_API_URL;
 
-export default function App() {
-  const [status, setStatus] = useState('loading...');
-
-  useEffect(() => {
-    fetch(`${API}/api/ping`)
-      .then((r) => r.json())
-      .then((d) => setStatus(`${d.message} (db: ${d.db})`))
-      .catch(() => setStatus('API unreachable'));
-  }, []);
-
-  return <h1>Testing PostIt! {status}</h1>;
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
 }
+
+export default App;

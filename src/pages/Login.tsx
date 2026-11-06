@@ -1,0 +1,15 @@
+import { useEffect, useState } from 'react';
+const API = import.meta.env.VITE_API_URL;
+
+export default function Login() {
+  const [status, setStatus] = useState('loading...');
+
+  useEffect(() => {
+    fetch(`${API}/api/ping`)
+      .then((r) => r.json())
+      .then((d) => setStatus(`${d.message} (db: ${d.db})`))
+      .catch(() => setStatus('API unreachable'));
+  }, []);
+
+  return <h1>Testing PostIt!  {status}</h1>;
+}
