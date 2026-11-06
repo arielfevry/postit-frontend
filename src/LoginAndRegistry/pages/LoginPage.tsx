@@ -1,5 +1,5 @@
 
-import { useState, type FormEvent, type ChangeEvent, use } from "react";
+import { useState, type SubmitEvent, type ChangeEvent, use } from "react";
 import { apiFetch, type AuthResponse } from "../utils/api";
 import { saveSession } from "../utils/session";
 const API = import.meta.env.VITE_API_URL;
@@ -33,6 +33,61 @@ export default function LoginPage() {
   
   function handleSetPassword(e: ChangeEvent<HTMLInputElement>): void{
     setPassword(e.target.value);
+  }
+
+  //login function
+  async function doLogin(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+    setSuccessMessage("");
+
+    try{
+      const res = await apiFetch<AuthResponse>("api/auth/login", {
+        method: "POST",
+        body: {login: loginEmail, password: loginPassword}
+      });
+
+      if(!res.ok) {
+        setMessage(res.error ?? "Login failed");
+      }else{
+        startSession(res.data);
+        window.location.href = "/board";
+      }
+    } catch (error: unknown) {
+      setMessage((error as Error).toString());
+    }finally {
+      setIsLoading(false);
+    }
+  } 
+
+  //register 
+  async function doRegister(event:SubmitEvent): Promise<void> {
+    event.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+    setSuccessMessage("");
+
+    try{
+      const res = await apiFetch<AuthResponse>("api/users", {
+        method: "POST",
+        body: {name: regName, email: regEmail, password: regPassword},
+      });
+
+      if(!res.ok){
+        setMessage(res.error ?? "Failed Registration. Please try again.");
+      }else { 
+        startSession(res.data);
+        setSuccessMessage("Account Created Succesfully. Logging in...");
+        setTimeout(() => {
+          window.location.href = "/board";
+        }, 1000);
+      }
+    } catch (error: unknown) {
+      setMessage((error as Error).toString());
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
