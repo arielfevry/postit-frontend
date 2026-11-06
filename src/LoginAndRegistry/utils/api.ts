@@ -17,7 +17,7 @@ export interface ApiUser {
 }
 
 export interface AuthResponse {
-    token: string;
+    token?: string;
     user: ApiUser;
 }
 
@@ -28,7 +28,7 @@ export async function apiFetch<T> (
     const session = getSession();
 
     const headers: Record<string, string> = {};
-    if(options.body === undefined) headers["Content-Type"] = "application/json"
+    if(options.body !== undefined) headers["Content-Type"] = "application/json"
     if(session) headers["Authorization"] = `Bearer ${session.token}`;
 
     const response = await fetch(buildPath(route), {
@@ -51,6 +51,6 @@ export async function apiFetch<T> (
         ok: response.ok,
         status: response.status,
         data,
-        error: response.ok ? undefined : data.error ?? `Request failed (${response.status})`,
+        error: response.ok ? undefined : data?.error ?? `Request failed (${response.status})`,
     }
 }

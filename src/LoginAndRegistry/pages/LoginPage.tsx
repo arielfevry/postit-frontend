@@ -43,15 +43,17 @@ export default function LoginPage() {
     setSuccessMessage("");
 
     try{
-      const res = await apiFetch<AuthResponse>("api/auth/login", {
+      const res = await apiFetch<AuthResponse>("api/login", {
         method: "POST",
-        body: {login: loginEmail, password: loginPassword}
+        body: {email: loginEmail, password: loginPassword}
       });
 
       if(!res.ok) {
         setMessage(res.error ?? "Login failed");
       }else{
+        console.log("login data:", JSON.stringify(res.data));
         startSession(res.data);
+        console.log("saved:", localStorage.getItem("user_data"));
         window.location.href = "/board";
       }
     } catch (error: unknown) {
@@ -69,10 +71,12 @@ export default function LoginPage() {
     setSuccessMessage("");
 
     try{
-      const res = await apiFetch<AuthResponse>("api/users", {
+      const res = await apiFetch<AuthResponse>("api/register", {
         method: "POST",
         body: {name: regName, email: regEmail, password: regPassword},
       });
+
+      console.log({ name: regName, email: regEmail, password: regPassword });
 
       if(!res.ok){
         setMessage(res.error ?? "Failed Registration. Please try again.");

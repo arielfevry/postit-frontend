@@ -1,7 +1,7 @@
 //user saved in the localstorage to survive
 
 export interface Session {
-    token: string;
+    token?: string;
     id: string;
     name: string;
 }
@@ -13,7 +13,7 @@ export function getSession(): Session | null {
         const stored = localStorage.getItem(STORAGE_KEY);
         if(!stored) return null;
         const session = JSON.parse(stored) as Session;
-        return session.token && session.id ? session : null;
+        return session.id ? session : null;
     } catch {
         return null;
     }
