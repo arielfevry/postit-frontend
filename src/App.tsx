@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
-import Login from './pages/Login';
+import Login from './LoginAndRegistry/pages/LoginPage';
 
 const API = import.meta.env.VITE_API_URL;
 
