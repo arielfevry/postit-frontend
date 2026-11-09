@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, AuthError } from './api';
 import { useBoard } from './useBoard';
-import { clearAuth, clearSession, getAuthHeader, getStoredUser } from './user';
+import { clearSession, getStoredUser, getToken } from './user';
 import type { CanvasItem, ContentPatch, NewItem, NoteVariant, User, Viewport } from './types';
 import {
   fetchYouTubeTitle,
@@ -20,7 +20,6 @@ import RemindersPanel from './components/RemindersPanel';
 import TopBar from './components/TopBar';
 import SettingsModal from './components/SettingsModal';
 import AddMediaModal from './components/AddMediaModal';
-import SignInGate from './components/SignInGate';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './board.css';
 
@@ -29,9 +28,14 @@ export interface BoardPageProps {
   boardId?: string;
   /** Called by the home button and after the board is deleted. Defaults to navigating to "/". */
   onHome?: () => void;
+  /**
+   * Called after the user signs out, or when their session can't be used (no token, or the API
+   * answered 401). The session has already been cleared. Defaults to navigating to "/" (the login page).
+   */
+  onSignOut?: () => void;
 }
 
-const goHomeDefault = () => window.location.assign('/');
+const goToLogin = () => window.location.assign('/');
 
 function boardIdFromPath(): string | null {
   const m = window.location.pathname.match(/^\/board\/([a-f\d]{24})\/?$/i);
@@ -39,22 +43,27 @@ function boardIdFromPath(): string | null {
 }
 
 /* ================================================================== */
-/*  Entry: makes sure there's a user and a board id, then shows it    */
+/*  Entry: makes sure there's a session and a board id, then shows it */
 /* ================================================================== */
 
-/** Signed in = we know the user AND hold their credential for this tab. */
-const signedInUser = () => (getAuthHeader() ? getStoredUser() : null);
-
-export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault }: BoardPageProps) {
-  const [user, setUser] = useState<User | null>(signedInUser);
-  const [signInMessage, setSignInMessage] = useState<string | null>(null);
+export default function BoardPage({ boardId: boardIdProp, onHome = goToLogin, onSignOut = goToLogin }: BoardPageProps) {
+  // Signed in = the login page's session exists and holds a token.
+  const [user] = useState<User | null>(() => (getToken() ? getStoredUser() : null));
   const [boardId, setBoardId] = useState<string | null>(boardIdProp ?? boardIdFromPath());
   const [createError, setCreateError] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState(!user);
   const creating = useRef(false);
 
   useEffect(() => {
     if (boardIdProp) setBoardId(boardIdProp);
   }, [boardIdProp]);
+
+  // No usable session: clear it and hand over to the login page.
+  useEffect(() => {
+    if (!signedOut) return;
+    clearSession();
+    onSignOut();
+  }, [signedOut, onSignOut]);
 
   // No id in the URL: create a fresh board (until the dashboard links here).
   useEffect(() => {
@@ -67,28 +76,15 @@ export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault
         setBoardId(board._id);
       })
       .catch((e: Error) => {
-        if (e instanceof AuthError) {
-          clearAuth();
-          setSignInMessage(e.message);
-          setUser(null);
-        } else setCreateError(e.message);
+        if (e instanceof AuthError) setSignedOut(true);
+        else setCreateError(e.message);
       })
       .finally(() => {
         creating.current = false;
       });
   }, [user, boardId]);
 
-  if (!user)
-    return (
-      <SignInGate
-        message={signInMessage}
-        initialEmail={getStoredUser()?.email ?? ''}
-        onSignedIn={(u) => {
-          setSignInMessage(null);
-          setUser(u);
-        }}
-      />
-    );
+  if (signedOut || !user) return <BoardMessage title="Taking you to the login page…" spinner />;
   if (createError) return <BoardMessage title="Couldn’t create a board" detail={createError} onHome={onHome} />;
   if (!boardId) return <BoardMessage title="Setting up your board…" spinner />;
 
@@ -98,15 +94,8 @@ export default function BoardPage({ boardId: boardIdProp, onHome = goHomeDefault
       boardId={boardId}
       user={user}
       onHome={onHome}
-      onSignOut={() => {
-        clearSession();
-        setUser(null);
-      }}
-      onAuthError={() => {
-        clearAuth();
-        setSignInMessage('Your session has expired. Please sign in again.');
-        setUser(null);
-      }}
+      onSignOut={() => setSignedOut(true)}
+      onAuthError={() => setSignedOut(true)}
     />
   );
 }
@@ -169,12 +158,12 @@ interface ViewProps {
   user: User;
   onHome: () => void;
   onSignOut: () => void;
-  /** a request came back 401: the stored credential is missing or wrong */
+  /** a request came back 401: the token is missing, invalid or expired */
   onAuthError: () => void;
 }
 
 function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps) {
-  const b = useBoard(boardId, user, onAuthError);
+  const b = useBoard(boardId, onAuthError);
   const { board, canvasItems, reminders, maxZ } = b;
 
   const savedViewport = useRef(loadViewport(boardId));

@@ -118,7 +118,7 @@ export default function TopBar(props: Props) {
           </button>
           {menuOpen && (
             <div className="dropdown-menu dropdown-menu-end show pb-user__menu" role="menu">
-              <div className="dropdown-header small text-truncate">{user.email}</div>
+              {user.email && <div className="dropdown-header small text-truncate">{user.email}</div>}
               <button type="button" className="dropdown-item d-flex align-items-center gap-2" onClick={props.onSignOut} role="menuitem">
                 <Icon name="logout" size={15} /> Sign out
               </button>

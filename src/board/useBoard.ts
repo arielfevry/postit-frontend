@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, AuthError } from './api';
-import type { AnyItem, Board, ContentPatch, NewItem, User } from './types';
+import type { AnyItem, Board, ContentPatch, NewItem } from './types';
 import { isCanvasItem, isReminder } from './types';
 
 const SAVE_DELAY = 450;
@@ -16,7 +16,7 @@ export type LoadState = 'loading' | 'ready' | 'error' | 'deleted';
  * then its full current content is sent. Saves for the same item run one at
  * a time so an older save can never land after a newer one.
  */
-export function useBoard(boardId: string, user: User, onAuthError: () => void) {
+export function useBoard(boardId: string, onAuthError: () => void) {
   const [board, setBoard] = useState<Board | null>(null);
   const [items, setItems] = useState<AnyItem[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -128,7 +128,7 @@ export function useBoard(boardId: string, user: User, onAuthError: () => void) {
   const addItem = useCallback(
     async (newItem: NewItem): Promise<AnyItem | null> => {
       try {
-        const { item } = await track(api.createItem(boardId, user.id, newItem));
+        const { item } = await track(api.createItem(boardId, newItem));
         setItems((prev) => [...prev, item]);
         return item;
       } catch (e) {
@@ -136,7 +136,7 @@ export function useBoard(boardId: string, user: User, onAuthError: () => void) {
         return null;
       }
     },
-    [boardId, user.id, track, fail],
+    [boardId, track, fail],
   );
 
   const removeItem = useCallback(

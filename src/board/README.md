@@ -15,23 +15,18 @@ import BoardPage from './board';
 
 `App.jsx` currently renders it for any `/board…` URL.
 
-### Signing in (for the login page)
+### Signing in
 
-The board routes (`/api/boards`) use HTTP Basic auth, so every board request has to carry the user's
-email and password. The board reads:
+`App.tsx` routes `/board/:boardId?` here, behind the login page's `RequireLogin`. After logging in, the
+login page goes to `/board`, which creates a new blank board and switches the URL to `/board/<id>`.
 
-- `localStorage.user`: the `{ id, name, email }` object `/api/login` returns
-- `sessionStorage['postit.auth']`: `"Basic " + base64(email + ":" + password)`, which is cleared when the tab closes
+The board uses the login page's session (`localStorage.user_data`, read with
+`LoginAndRegistry/utils/session.ts`): `{ token, id, name }`. Every board and item request sends
+`Authorization: Bearer <token>`.
 
-After a successful `/api/login`, the login page can store both with one call:
-
-```js
-import { saveSession } from './board/user';
-saveSession(user, email, password);
-```
-
-If either is missing, or the API answers 401, the board shows a small stand-in sign-in form
-(`components/SignInGate.tsx`) that does the same thing.
+If the session has no token, or the API answers 401 (an invalid or expired token; tokens last
+`JWT_EXPIRES_IN`, 1 hour by default), the board clears the session and calls `onSignOut`, which defaults to
+going to `/`, the login page. Signing out from the user menu does the same.
 
 ## Storage
 
@@ -52,8 +47,8 @@ API used:
 
 | | |
 |---|---|
-| Boards (Basic auth) | `POST /api/boards`, `GET/PATCH/DELETE /api/boards/:boardId`. Only the owner can PATCH or DELETE |
-| Items | `GET /api/items?boardId=`, `POST /api/items`, `PUT /api/items/:id`, `DELETE /api/items/:id` |
+| Boards | `POST /api/boards`, `GET/PATCH/DELETE /api/boards/:boardId`. Only the owner can PATCH or DELETE |
+| Items | `GET /api/items?boardId=`, `POST /api/items`, `PUT /api/items/:id`, `DELETE /api/items/:id`. The server takes the user from the token |
 
 - `PUT /api/items/:id` replaces the whole `content`, so edits are batched for about 0.5s and the item's full
   content is sent. Saves for the same item run one at a time, in order.
