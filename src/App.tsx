@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
 import LoginPage from './LoginAndRegistry/pages/LoginPage';
 import BoardPage from './board';
+import Dashboard from './dashboard/Dashboard';
 import { getSession } from './LoginAndRegistry/utils/session';
 
 const API = import.meta.env.VITE_API_URL;
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         {/* /board creates a new blank board and moves to /board/:boardId */}
         <Route path="/board/:boardId?" element={<RequireLogin><BoardPage /></RequireLogin>} />
+        <Route path="/dashboard" element={<RequireLogin> <Dashboard /> </RequireLogin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
