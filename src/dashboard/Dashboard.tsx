@@ -4,6 +4,8 @@ import { User, Board } from "../board/types";
 import { clearSession, getStoredUser, getToken } from "../board/user";
 import TopBar from "../board/components/TopBar";
 import { api } from "../board/api";
+
+
 const goToLogin = () => window.location.assign('/');
 
 interface DashProps {
@@ -83,7 +85,7 @@ export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} 
                 <div style={{display: 'grid', gap: '16px', marginTop: '16px'}}>
                     {boards.map((boards) => (
                         <div key={boards._id} style={{border: '1px solid #000000', padding:'16px'}}>
-                            <button type="button" className="pb-nav__btn pb-nav__brand">
+                            <button type="button" className="pb-nav__btn pb-nav__brand" onClick={() => window.location.href = `/board/${boards._id}`}>
                                 <span>{boards.title}</span>
                             </button>
     
