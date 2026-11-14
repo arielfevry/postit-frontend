@@ -60,6 +60,8 @@ export const api = {
   /** Owner only. The server refuses (409) while the board still has items. */
   deleteBoard: (boardId: string) => request<void>(`/boards/${boardId}`, { method: 'DELETE' }),
 
+  listBoards: () => request<{boards: Board[]}>(`/boards`, {method: 'GET'}),
+
   /* ----- items: /api/items (the server takes the user from the token) ----- */
 
   getItems: (boardId: string) => request<{ items: AnyItem[] }>(`/items?boardId=${encodeURIComponent(boardId)}`),
