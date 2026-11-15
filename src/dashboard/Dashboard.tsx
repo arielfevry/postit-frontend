@@ -4,9 +4,11 @@ import { User, Board } from "../board/types";
 import { clearSession, getStoredUser, getToken } from "../board/user";
 import TopBar from "../board/components/TopBar";
 import { api } from "../board/api";
+import CreateModal from "./components/CreateModal";
 
 
 const goToLogin = () => window.location.assign('/');
+const goHome = () => window.location.assign('/dashboard');
 
 interface DashProps {
     onSignOut?: () => void;
@@ -16,19 +18,21 @@ interface DashProps {
 
 
 interface ViewProps{
-    
     user: User;
     onHome: () => void;
     onSignOut: () => void;
     onAuthError: () => void;
 }
 
-export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} : DashProps) {
+type ModalKind = 'create' | null;
+
+export default function Dashboard( { onHome = goHome, onSignOut = goToLogin} : DashProps) {
     const [user] = useState<User | null>(() => (getToken() ? getStoredUser() : null));
     const [signedOut, setSignedOut] = useState(!user);
     const [isLoading, setIsLoading] = useState(true);
     const [boards, setBoards] = useState<Board[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [modal, setModal] = useState<ModalKind>(null);
 
     // No session, returns to the login page
     useEffect(() => {
@@ -61,10 +65,6 @@ export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} 
         fetchBoards();
     }, []);
 
-    let i: number = 0;
-    for(; i < boards.length; i++){
-        console.log(boards[i]._id);
-    }
 
     if(isLoading) return <p>Loading Boards</p>;
     if(error) return <p>{error}</p>
@@ -76,6 +76,7 @@ export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} 
             user={user}
             onHome={onHome}
             onSignout={onSignOut}
+            onCreate={() => setModal('create')}
             />
             <h1>My Boards</h1>
 
@@ -92,6 +93,13 @@ export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} 
                         </div>
                     ))}
                 </div>
+            )}
+
+            {modal === 'create' && (
+                <CreateModal
+                onClose={() => setModal(null)}
+                user={user}
+                />
             )}
         </div>
     );

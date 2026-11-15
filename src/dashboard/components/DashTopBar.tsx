@@ -6,6 +6,7 @@ interface Props {
     user: User;
     onHome: () => void;
     onSignout: () => void;
+    onCreate: () => void;
 }
 
 export default function DashTopBar(props: Props) {
@@ -27,9 +28,13 @@ export default function DashTopBar(props: Props) {
     return (
         <header className="pb-top">
             <nav className="pb-card pb-nav" aria-label="Dash navigation">
-                <button type="button" className="pb-nav__btn pb-nav__brand">
+                <button type="button" className="pb-nav__btn pb-nav__brand" style={{border: 'solid 2px', borderColor: '#EB8F38'}}>
                     <Icon name="home" size={16}/>
                     <span>POST IT!</span>
+                </button>
+                <button type='button' className='pb-nav__btn pb-nav__brand' onClick={props.onCreate} style={{border: 'solid 2px', borderColor: '#eb8f38'}}>
+                    <Icon name='plus' size={16}/>
+                    <span> Create</span>
                 </button>
             </nav>
 
@@ -40,6 +45,7 @@ export default function DashTopBar(props: Props) {
                     onClick={() => setMenuOpen((o) => !o)}
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
+                    style={{border: 'solid 2px', borderColor: '#EB8F38'}}
                     >
                         <span className="pb-user__hello">
                             Hello <strong>{user.name}</strong>
