@@ -71,7 +71,7 @@ export default function Dashboard( { onHome = goToLogin, onSignOut = goToLogin} 
 
     return (
         
-        <div style={{padding: '12px'}}>
+        <div style={{padding: '16px'}}>
             <DashTopBar
             user={user}
             onHome={onHome}

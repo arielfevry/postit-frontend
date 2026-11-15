@@ -32,6 +32,33 @@ export default function DashTopBar(props: Props) {
                     <span>POST IT!</span>
                 </button>
             </nav>
+
+            <div className="pb-top__right">
+                <div className="pb-user" ref={menuRef}>
+                    <button type='button'
+                    className='pb-card pb-user__btn'
+                    onClick={() => setMenuOpen((o) => !o)}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    >
+                        <span className="pb-user__hello">
+                            Hello <strong>{user.name}</strong>
+                        </span>
+                        <span className="pb-avatar" aria-hidden="true">
+                            {initial}
+                        </span>
+                    </button>
+                    {menuOpen && (
+                        <div className="dropdown-menu dropdown-menu-end show pb-user__menu" role="menu">
+                            {user.email && <div className="dropdown-header small text-truncate">{user.email}</div>}
+                            <button type="button" className="dropdown-item d-flex align-items-center gap-2" onClick={props.onSignout} role="menuitem">
+                                <Icon name='logout' size={15}/> Sign Out
+                            </button>
+                        </div>
+
+                    )}
+                </div>
+            </div>
         </header>
     )
 }
