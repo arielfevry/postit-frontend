@@ -67,7 +67,6 @@ export default function CreateModal({user, onClose}: Props) {
                     />
                 </div>
             </form>
-            <span>Create</span>
         </Modal>
     );
 }

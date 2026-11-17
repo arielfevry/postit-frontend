@@ -30,6 +30,7 @@ export default function Dashboard( { onHome = goHome, onSignOut = goToLogin} : D
     const [user] = useState<User | null>(() => (getToken() ? getStoredUser() : null));
     const [signedOut, setSignedOut] = useState(!user);
     const [isLoading, setIsLoading] = useState(true);
+    const [search, setSearchQuery] = useState("");
     const [boards, setBoards] = useState<Board[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [modal, setModal] = useState<ModalKind>(null);
@@ -64,27 +65,38 @@ export default function Dashboard( { onHome = goHome, onSignOut = goToLogin} : D
 
         fetchBoards();
     }, []);
-
+    
+    //Board Search filtering 
+    const filteredBoards = boards.filter((board) => 
+        board.title?.toLowerCase().includes(search.toLowerCase())
+    );
 
     if(isLoading) return <p>Loading Boards</p>;
     if(error) return <p>{error}</p>
 
     return (
         
-        <div style={{padding: '16px'}}>
+        <div style={{padding: '16px'}} className="pb-app">
             <DashTopBar
             user={user}
             onHome={onHome}
             onSignout={onSignOut}
             onCreate={() => setModal('create')}
             />
-            <h1>My Boards</h1>
+            <h1 className="pb-title">My Boards</h1>
 
-            {boards?.length === 0 || boards?.length === undefined ? (
+            <input 
+            type="text"
+            placeholder="Search for a Board..."
+            value={search}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            
+            {filteredBoards?.length === 0 || filteredBoards?.length === undefined ? (
                 <p>No Boards</p>
             ) : (
-                <div style={{display: 'grid', gap: '16px', marginTop: '16px'}}>
-                    {boards.map((boards) => (
+                <div style={{display: 'grid', gap: '16px', marginTop: '16px'}} >
+                    {filteredBoards.map((boards) => (
                         <div key={boards._id} style={{border: '1px solid #000000', padding:'16px'}}>
                             <button type="button" className="pb-nav__btn pb-nav__brand" onClick={() => window.location.href = `/board/${boards._id}`}>
                                 <span>{boards.title}</span>
