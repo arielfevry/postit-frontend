@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DashTopBar from "./components/DashTopBar";
 import { User, Board } from "../board/types";
 import { clearSession, getStoredUser, getToken } from "../board/user";
 import TopBar from "../board/components/TopBar";
 import { api } from "../board/api";
 import CreateModal from "./components/CreateModal";
+import Icon from "../board/components/Icon";
 
 
 const goToLogin = () => window.location.assign('/');
@@ -76,29 +77,35 @@ export default function Dashboard( { onHome = goHome, onSignOut = goToLogin} : D
 
     return (
         
-        <div style={{padding: '16px'}} className="pb-app">
+        <div style={{padding: '16px', minHeight: '100vh', boxSizing: 'border-box'}} className="pb-app pb-surface--cork">
             <DashTopBar
             user={user}
             onHome={onHome}
             onSignout={onSignOut}
             onCreate={() => setModal('create')}
             />
-            <h1 className="pb-title">My Boards</h1>
+            <h1 style={{textAlign: 'center'}}>My Boards</h1>
 
-            <input 
-            type="text"
-            placeholder="Search for a Board..."
-            value={search}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+                <input 
+                type="text"
+                placeholder="Search for a Board..."
+                value={search}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{display: 'block', width: '100%', maxWidth: '600px',marginBottom: '16px', padding: '16px', boxSizing:"border-box"}}
+                />
+            </div>
             
             {filteredBoards?.length === 0 || filteredBoards?.length === undefined ? (
                 <p>No Boards</p>
             ) : (
-                <div style={{display: 'grid', gap: '16px', marginTop: '16px'}} >
+                <div style={{display: 'grid', gap: '16px', marginTop: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'}} >
                     {filteredBoards.map((boards) => (
-                        <div key={boards._id} style={{border: '1px solid #000000', padding:'16px'}}>
-                            <button type="button" className="pb-nav__btn pb-nav__brand" onClick={() => window.location.href = `/board/${boards._id}`}>
+                        <div key={boards._id} className="pb-note pb-note--paper pb-board-card"
+                        style={{'--pb-paper': '#e6f2a2'} as React.CSSProperties}
+                        >
+                            <span className="pb-tape"/>
+                            <button type="button" className="pb-board-card__btn" onClick={() => window.location.href = `/board/${boards._id}`}>
                                 <span>{boards.title}</span>
                             </button>
     
