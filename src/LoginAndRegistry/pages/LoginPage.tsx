@@ -54,7 +54,7 @@ export default function LoginPage() {
         console.log("login data:", JSON.stringify(res.data));
         startSession(res.data);
         console.log("saved:", localStorage.getItem("user_data"));
-        window.location.href = "/board";
+        window.location.href = "/dashboard";
       }
     } catch (error: unknown) {
       setMessage((error as Error).toString());
@@ -84,7 +84,7 @@ export default function LoginPage() {
         startSession(res.data);
         setSuccessMessage("Account Created Succesfully. Logging in...");
         setTimeout(() => {
-          window.location.href = "/board";
+          window.location.href = "/dashboard";
         }, 1000);
       }
     } catch (error: unknown) {
