@@ -9,6 +9,7 @@ interface Props {
   openReminders: number;
   onHome: () => void;
   onSettings: () => void;
+  onShare: () => void;
   /** omitted when the user can't rename (only the owner can) */
   onRename?: (title: string) => void;
   onToggleReminders: () => void;
@@ -100,6 +101,10 @@ export default function TopBar(props: Props) {
         >
           <Icon name="bell" size={16} />
           {props.openReminders > 0 && <span className="pb-reminder-toggle__count">{props.openReminders}</span>}
+        </button>
+        <button type="button" className="pb-card pb-share-btn" onClick={props.onShare} aria-haspopup="dialog">
+          <Icon name="share" size={16} />
+          <span className="pb-share-btn__label">Share</span>
         </button>
         <div className="pb-user" ref={menuRef}>
           <button

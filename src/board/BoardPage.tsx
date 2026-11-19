@@ -20,6 +20,7 @@ import RemindersPanel from './components/RemindersPanel';
 import TopBar from './components/TopBar';
 import SettingsModal from './components/SettingsModal';
 import AddMediaModal from './components/AddMediaModal';
+import ShareModal from './components/ShareModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './board.css';
 
@@ -36,6 +37,7 @@ export interface BoardPageProps {
 }
 
 const goToLogin = () => window.location.assign('/');
+const goToDashboard = () => window.location.assign('/dashboard');
 
 function boardIdFromPath(): string | null {
   const m = window.location.pathname.match(/^\/board\/([a-f\d]{24})\/?$/i);
@@ -46,7 +48,7 @@ function boardIdFromPath(): string | null {
 /*  Entry: makes sure there's a session and a board id, then shows it */
 /* ================================================================== */
 
-export default function BoardPage({ boardId: boardIdProp, onHome = goToLogin, onSignOut = goToLogin }: BoardPageProps) {
+export default function BoardPage({ boardId: boardIdProp, onHome = goToDashboard, onSignOut = goToLogin }: BoardPageProps) {
   // Signed in = the login page's session exists and holds a token.
   const [user] = useState<User | null>(() => (getToken() ? getStoredUser() : null));
   const [boardId, setBoardId] = useState<string | null>(boardIdProp ?? boardIdFromPath());
@@ -136,7 +138,7 @@ function BoardMessage({
 /*  The board itself                                                   */
 /* ================================================================== */
 
-type ModalKind = 'settings' | 'image' | 'video' | null;
+type ModalKind = 'settings' | 'share' | 'image' | 'video' | null;
 
 const vpKey = (id: string) => `postit:viewport:${id}`;
 
@@ -439,6 +441,7 @@ function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps)
         openReminders={openReminders}
         onHome={onHome}
         onSettings={() => setModal('settings')}
+        onShare={() => setModal('share')}
         onRename={isOwner ? (title) => b.updateBoard({ title }) : undefined}
         onToggleReminders={() => setRemindersOpen((o) => !o)}
         onSignOut={onSignOut}
@@ -506,6 +509,10 @@ function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps)
       />
       {remindersOpen && <div className="pb-scrim d-xl-none" onClick={() => setRemindersOpen(false)} />}
 
+      {modal === 'share' && (
+        // No onGrantAccess yet: the backend has no endpoint that adds a user to a board.
+        <ShareModal board={board} currentUser={user} onClose={() => setModal(null)} onAuthError={onAuthError} />
+      )}
       {modal === 'settings' && (
         <SettingsModal
           board={board}
