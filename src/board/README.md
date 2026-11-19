@@ -28,6 +28,22 @@ If the session has no token, or the API answers 401 (an invalid or expired token
 `JWT_EXPIRES_IN`, 1 hour by default), the board clears the session and calls `onSignOut`, which defaults to
 going to `/`, the login page. Signing out from the user menu does the same.
 
+### Sharing
+
+The **Share** button in the top bar opens `components/ShareModal.tsx`. It finds an account by email with
+`GET /api/users/search?email=` (on the backend's `sam-crud` branch) and shows whether that person already
+has access (`board.ownerId` / `board.userIds`).
+
+The backend has no endpoint yet that adds someone to a board, so **Give edit access** is disabled.
+Possible Example Endpoint:
+
+```tsx
+onGrantAccess={async (u) => {
+  const { board } = await api.addBoardMember(boardId, u.id); // new endpoint
+  /* update the board in useBoard so the member list refreshes */
+}}
+```
+
 ## Storage
 
 Everything is saved with the existing `Item` model; position, size, rotation and stacking order live in

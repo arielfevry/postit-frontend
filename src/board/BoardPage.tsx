@@ -20,6 +20,7 @@ import RemindersPanel from './components/RemindersPanel';
 import TopBar from './components/TopBar';
 import SettingsModal from './components/SettingsModal';
 import AddMediaModal from './components/AddMediaModal';
+import ShareModal from './components/ShareModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './board.css';
 
@@ -137,7 +138,7 @@ function BoardMessage({
 /*  The board itself                                                   */
 /* ================================================================== */
 
-type ModalKind = 'settings' | 'image' | 'video' | null;
+type ModalKind = 'settings' | 'share' | 'image' | 'video' | null;
 
 const vpKey = (id: string) => `postit:viewport:${id}`;
 
@@ -440,6 +441,7 @@ function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps)
         openReminders={openReminders}
         onHome={onHome}
         onSettings={() => setModal('settings')}
+        onShare={() => setModal('share')}
         onRename={isOwner ? (title) => b.updateBoard({ title }) : undefined}
         onToggleReminders={() => setRemindersOpen((o) => !o)}
         onSignOut={onSignOut}
@@ -507,6 +509,10 @@ function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps)
       />
       {remindersOpen && <div className="pb-scrim d-xl-none" onClick={() => setRemindersOpen(false)} />}
 
+      {modal === 'share' && (
+        // No onGrantAccess yet: the backend has no endpoint that adds a user to a board.
+        <ShareModal board={board} currentUser={user} onClose={() => setModal(null)} onAuthError={onAuthError} />
+      )}
       {modal === 'settings' && (
         <SettingsModal
           board={board}

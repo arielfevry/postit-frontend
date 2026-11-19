@@ -20,8 +20,15 @@ export default function Modal({ title, onClose, children, footer, size }: Props)
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const first = dialogRef.current?.querySelector<HTMLElement>('[autofocus], input, select, textarea, button');
-    first?.focus();
+    // Keep focus if a field already took it (autoFocus); otherwise focus the first field, then the first button.
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.contains(document.activeElement)) {
+      const focusable = (selector: string) =>
+        [...dialog.querySelectorAll<HTMLElement>(selector)].find(
+          (el) => el.getClientRects().length > 0 && !el.hasAttribute('disabled'), // skip hidden/disabled
+        );
+      (focusable('input, select, textarea') ?? focusable('button'))?.focus();
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCloseRef.current();
     };

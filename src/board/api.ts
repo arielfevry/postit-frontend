@@ -1,10 +1,19 @@
-import type { Board, AnyItem, NewItem } from './types';
+import type { Board, AnyItem, NewItem, User } from './types';
 import { getToken } from './user';
 
 const BASE = String(import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 /** Thrown when there's no token or the API answers 401, so the board can send the user to log in. */
 export class AuthError extends Error {}
+
+/** Any other failed request; `status` is the HTTP status code. */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
 
 // keepalive requests (used when the tab closes) are capped at 64KB by browsers
 const KEEPALIVE_LIMIT = 60_000;
@@ -42,7 +51,7 @@ async function request<T>(path: string, { method = 'GET', body, keepalive }: Opt
   if (res.status === 401) throw new AuthError('Your session has expired. Please log in again.');
   if (res.status === 413) throw new Error('That is too large to save. Try a smaller image.');
   // board routes report problems as { error }, item routes as { message }
-  if (!res.ok) throw new Error(data.error || data.message || `Request failed (${res.status})`);
+  if (!res.ok) throw new ApiError(data.error || data.message || `Request failed (${res.status})`, res.status);
   return data as T;
 }
 
@@ -61,6 +70,15 @@ export const api = {
   deleteBoard: (boardId: string) => request<void>(`/boards/${boardId}`, { method: 'DELETE' }),
 
   listBoards: () => request<{boards: Board[]}>(`/boards`, {method: 'GET'}),
+
+  /* ----- users: /api/users ----- */
+
+  /**
+   * Finds an account by email: GET /api/users/search?email= → { user: { id, name, email } }.
+   * 404 when no account has that email.
+   */
+  searchUserByEmail: (email: string) =>
+    request<{ user: User }>(`/users/search?email=${encodeURIComponent(email.trim())}`),
 
   /* ----- items: /api/items (the server takes the user from the token) ----- */
 
