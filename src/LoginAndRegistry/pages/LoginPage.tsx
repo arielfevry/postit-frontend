@@ -94,12 +94,12 @@ export default function LoginPage() {
     }
   }
 
-  return (
-      <main className="container d-flex justify-content-center align-items-center my-4">
-        <div id="loginDiv" className="card shadow-lg border-0 rounded-4 p-4 p-md-5 w-100" style={{maxWidth: "480px"}}>
+  return ( 
+      <main className="container d-flex justify-content-center align-items-center  pb-app pb-surface--cork" style={{minHeight: "100vh"}}>
+        <div id="loginDiv" className="p-4 p-md-5 w-100 pb-note pb-note--paper" style={{maxWidth: "480px"}}>
+          <span >
           <div className="text-center mb-4">
             <div 
-            className="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
             style={{width: "64px", height: "64px"}}>
               <i
               className={`bi ${isRegisterMode ? "bi-person-plus-fill" : "bi-shield-lock-fill"} fs-2`}
@@ -107,33 +107,27 @@ export default function LoginPage() {
               ></i>
             </div>
             <h2 className="h4 fw-bold text-body-emphasis mb-2">
-              {isRegisterMode ? "Create Account" : "Account Login"}
+              {isRegisterMode ? "Welcome to PostIt!" : "Login to PostIt!"}
             </h2>
-            <span
-            id="inner-title"
-            className="badge bg-primary-subtle text-primary-emphasis fw-semibold px-3 py-2"
-            >
-              {isRegisterMode ? "NEW USER REGISTRATION" : `PLEASE LOG IN: ${import.meta.env.PROD ? "Production" : "Dev"}`}
-            </span>
           </div>
 
           {/*mode switch*/}
-          <div className="nav nav-pills nav-fill bg-light-subtle rounded-3 p-1 mb-4 border">
+          <div className="nav nav-pills nav-fill pb-tabs bg-light-subtle  p-1 mb-4 border">
             <button
             type="button"
-            className={`nav-link fw-semibold rounded-2 py-2 ${!isRegisterMode ? "active" : ""}`}
+            className={`nav-link ${!isRegisterMode ? "active" : ""}`}
             onClick={() => {
               setIsRegisterMode(false);
               setMessage("");
               setSuccessMessage("");
             }}
             >
-              <i className="bi bi-person-plus me-2"></i> Login
+              <i className="bi bi-person-plus "></i> Login
             </button>
             <button
             type="button"
             id="toggleRegister"
-            className={`nav-link fw-semibold rounded-2 py-2 ${isRegisterMode ? "active" : "" }`}
+            className={`nav-link ${isRegisterMode ? "active" : "" }`}
             onClick={() => {
               setIsRegisterMode(true);
               setMessage("");
@@ -181,7 +175,7 @@ export default function LoginPage() {
             <button 
             type="submit"
             id="loginButton"
-            className="btn btn-primary btn-lg w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
+            className="btn btn-warning btn-lg w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
             disabled={isLoading}
             >
               {isLoading ? (
@@ -203,8 +197,7 @@ export default function LoginPage() {
           </form>  
           ) : (
             <form onSubmit={doRegister}>
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+                <div className="mb-3 form-floating">
                   <input
                   type="text"
                   className="form-control"
@@ -217,10 +210,9 @@ export default function LoginPage() {
                   <label htmlFor="regName">Name</label>
                 </div>
                 
-              </div>
 
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+
+                <div className="mb-3 form-floating">
                   <input
                   type="email"
                   className="form-control"
@@ -234,11 +226,8 @@ export default function LoginPage() {
                     <i className="bi bi-envelope me-2" aria-hidden="true"></i> Email
                   </label>
                 </div>
-                
-              </div>
 
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+                <div className="mb-3 form-floating">
                   <input
                   type="password"
                   className="form-control"
@@ -252,7 +241,6 @@ export default function LoginPage() {
                     <i className="bi bi-envelope me-2" aria-hidden="true"></i> Password
                   </label>
                 </div>
-              </div>
               <button
               type="submit"
               id="registerButton"
@@ -304,7 +292,9 @@ export default function LoginPage() {
               {successMessage}
             </div>
           )}
+          </span>
         </div>
       </main>
+
   );
 }
