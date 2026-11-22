@@ -95,11 +95,10 @@ export default function LoginPage() {
   }
 
   return (
-      <main className="container d-flex justify-content-center align-items-center my-4">
-        <div id="loginDiv" className="card shadow-lg border-0 rounded-4 p-4 p-md-5 w-100" style={{maxWidth: "480px"}}>
+      <main className="container d-flex justify-content-center align-items-center  pb-app pb-surface--cork" style={{minHeight: "100vh"}}>
+        <div id="loginDiv" className=" rounded-4 p-4 p-md-5 w-100 pb-note pb-note--paper" style={{maxWidth: "480px"}}>
           <div className="text-center mb-4">
             <div 
-            className="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
             style={{width: "64px", height: "64px"}}>
               <i
               className={`bi ${isRegisterMode ? "bi-person-plus-fill" : "bi-shield-lock-fill"} fs-2`}
@@ -107,7 +106,7 @@ export default function LoginPage() {
               ></i>
             </div>
             <h2 className="h4 fw-bold text-body-emphasis mb-2">
-              {isRegisterMode ? "Create Account" : "Account Login"}
+              {isRegisterMode ? "Welcome to PostIt!" : "Login to PostIt!"}
             </h2>
             <span
             id="inner-title"
@@ -203,8 +202,7 @@ export default function LoginPage() {
           </form>  
           ) : (
             <form onSubmit={doRegister}>
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+                <div className="mb-3 form-floating">
                   <input
                   type="text"
                   className="form-control"
@@ -217,10 +215,9 @@ export default function LoginPage() {
                   <label htmlFor="regName">Name</label>
                 </div>
                 
-              </div>
 
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+
+                <div className="mb-3 form-floating">
                   <input
                   type="email"
                   className="form-control"
@@ -234,11 +231,8 @@ export default function LoginPage() {
                     <i className="bi bi-envelope me-2" aria-hidden="true"></i> Email
                   </label>
                 </div>
-                
-              </div>
 
-              <div className="row g-2 mb-3">
-                <div className="col-6 form-floating">
+                <div className="mb-3 form-floating">
                   <input
                   type="password"
                   className="form-control"
@@ -252,7 +246,6 @@ export default function LoginPage() {
                     <i className="bi bi-envelope me-2" aria-hidden="true"></i> Password
                   </label>
                 </div>
-              </div>
               <button
               type="submit"
               id="registerButton"
