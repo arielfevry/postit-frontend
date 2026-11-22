@@ -97,7 +97,7 @@ export default function Dashboard( { onHome = goHome, onSignOut = goToLogin} : D
             </div>
             
             {filteredBoards?.length === 0 || filteredBoards?.length === undefined ? (
-                <p>No Boards</p>
+                <p style={{textAlign: "center", fontSize: "20px"}} className="fw-bold text-xl">No Boards</p>
             ) : (
                 <div style={{display: 'grid', gap: '16px', marginTop: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'}} >
                     {filteredBoards.map((boards) => (

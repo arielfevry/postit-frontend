@@ -94,9 +94,10 @@ export default function LoginPage() {
     }
   }
 
-  return (
+  return ( 
       <main className="container d-flex justify-content-center align-items-center  pb-app pb-surface--cork" style={{minHeight: "100vh"}}>
-        <div id="loginDiv" className=" rounded-4 p-4 p-md-5 w-100 pb-note pb-note--paper" style={{maxWidth: "480px"}}>
+        <div id="loginDiv" className="p-4 p-md-5 w-100 pb-note pb-note--paper" style={{maxWidth: "480px"}}>
+          <span >
           <div className="text-center mb-4">
             <div 
             style={{width: "64px", height: "64px"}}>
@@ -108,31 +109,25 @@ export default function LoginPage() {
             <h2 className="h4 fw-bold text-body-emphasis mb-2">
               {isRegisterMode ? "Welcome to PostIt!" : "Login to PostIt!"}
             </h2>
-            <span
-            id="inner-title"
-            className="badge bg-primary-subtle text-primary-emphasis fw-semibold px-3 py-2"
-            >
-              {isRegisterMode ? "NEW USER REGISTRATION" : `PLEASE LOG IN: ${import.meta.env.PROD ? "Production" : "Dev"}`}
-            </span>
           </div>
 
           {/*mode switch*/}
-          <div className="nav nav-pills nav-fill bg-light-subtle rounded-3 p-1 mb-4 border">
+          <div className="nav nav-pills nav-fill pb-tabs bg-light-subtle  p-1 mb-4 border">
             <button
             type="button"
-            className={`nav-link fw-semibold rounded-2 py-2 ${!isRegisterMode ? "active" : ""}`}
+            className={`nav-link ${!isRegisterMode ? "active" : ""}`}
             onClick={() => {
               setIsRegisterMode(false);
               setMessage("");
               setSuccessMessage("");
             }}
             >
-              <i className="bi bi-person-plus me-2"></i> Login
+              <i className="bi bi-person-plus "></i> Login
             </button>
             <button
             type="button"
             id="toggleRegister"
-            className={`nav-link fw-semibold rounded-2 py-2 ${isRegisterMode ? "active" : "" }`}
+            className={`nav-link ${isRegisterMode ? "active" : "" }`}
             onClick={() => {
               setIsRegisterMode(true);
               setMessage("");
@@ -180,7 +175,7 @@ export default function LoginPage() {
             <button 
             type="submit"
             id="loginButton"
-            className="btn btn-primary btn-lg w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
+            className="btn btn-warning btn-lg w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
             disabled={isLoading}
             >
               {isLoading ? (
@@ -297,7 +292,9 @@ export default function LoginPage() {
               {successMessage}
             </div>
           )}
+          </span>
         </div>
       </main>
+
   );
 }
