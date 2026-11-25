@@ -39,7 +39,12 @@ export async function apiFetch<T> (
 
     //204 error no content
     const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
+    let data: any = null;
+    try{
+        data = text ? JSON.parse(text) : null;
+    } catch  {
+        data = null;
+    }
 
     if(response.status === 401 && session) {
         //expired token
@@ -53,4 +58,18 @@ export async function apiFetch<T> (
         data,
         error: response.ok ? undefined : data?.error ?? `Request failed (${response.status})`,
     }
+}
+
+export const api = {
+    forgotPassword: (email: string) => 
+        apiFetch<{message: string}>('/api/forgot-password', {
+          method: 'POST',
+          body: {email} 
+        }),  
+    
+        resetPassword: (token: string, password: string) =>
+          apiFetch<void>('/api/reset-password', {
+            method: 'POST',
+            body:{ token, password }
+          }),
 }
