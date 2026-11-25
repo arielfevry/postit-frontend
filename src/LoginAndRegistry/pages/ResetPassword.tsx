@@ -16,24 +16,30 @@ export default function ResetPassword() {
 
     async function handleSubmit(e: SyntheticEvent<HTMLFormElement>): Promise<void> {
         e.preventDefault();
-        setLoading(true);
         setMessage("");
 
         if (password !== confirm) return setMessage("Passwords must match");
 
+        setLoading(true);
 
-        try {
-            const res = await api.resetPassword(token, password);
+        if(password == confirm){
+            try {
+                const res = await api.resetPassword(token, password);
 
-            if(res.status === 204) {
-                window.location.href = '/login';
-                return;
+                if(res.status === 204) {
+                    setMessage("New password set! Sending you to the Login Page...");
+                    window.location.href = '/login';
+                    return;
+                }
+                else {
+                    setMessage(res.error ?? "Something went wrong.");
+                }
+                
+            } catch (error) {
+                setMessage((error as Error).toString());
+            } finally {
+                setLoading(false);
             }
-            setMessage(res.error ?? "Something went wrong.");
-        } catch (error) {
-            setMessage((error as Error).toString());
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -41,7 +47,7 @@ export default function ResetPassword() {
         return (
             <main className="container d-flex justify-content-center align-items-center  pb-app pb-surface--cork" style={{minHeight: "100vh"}}>
                 <div id="loginDiv" className="p-4 p-md-5 w-100 pb-note pb-note--paper" style={{maxWidth: "480px"}}>
-                    <h2 className=" justify-content-center"> Link is Invalid</h2>
+                    <h2 className=" justify-content-center text-center fw-bold"> Link has expired.</h2>
                 </div>
             </main>
         );
@@ -80,6 +86,7 @@ export default function ResetPassword() {
                         </label>
                    </div>
                     <button className="btn btn-lg btn-warning w-100" disabled={loading}>{loading ? "Saving..." : "Reset Password"}</button>
+                    <p role='status' className=" mt-2 ">{message}</p>
                 </form>
             </div>
         </main>

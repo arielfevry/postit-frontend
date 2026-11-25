@@ -6,6 +6,9 @@ export default function ForgotPassword() {
     const[loading, setLoading] = useState(false);
     const[message, setMessage] = useState("");
 
+
+    //sends the email inputed to the api
+
     async function sendEmail(e: SubmitEvent): Promise<void> {
         e.preventDefault();
         setLoading(true);
@@ -14,15 +17,17 @@ export default function ForgotPassword() {
         try {
             const res = await api.forgotPassword(email);
 
-            if (!res.ok){
+            if (!res.ok){   //if password is incorrect then it tells you that the email wasnt valid
                 setMessage("Password reset failed. Please enter a valid email");
+                
                
             }else {
-                setMessage("Reset link has been sent to Email");
+                setMessage("Reset link has been sent to Email"); //sends a message with the password reset link 
+                window.location.href = "/login";
                 console.log(res.status);
             }
-        } catch (error: unknown) {
-            setMessage((error as Error).toString());
+        } catch (error: unknown) {//returns an error if something went wrong
+            setMessage((error as Error).toString());  
         } finally {
             setLoading(false);
         }
@@ -51,7 +56,7 @@ export default function ForgotPassword() {
                         </label>
                     </ div>
                     <button className='btn btn-warning btn-large w-100 fw-semibold d-flex align-items-center justify-content-center gap-2' disabled={loading}>{loading ? "Sending..." : "Reset"} </button>
-                    <p role='status'>{message}</p>
+                    <p role='status' className='mt-2'>{message}</p>
                 </form>
             </div>
         </main>
