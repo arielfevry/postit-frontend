@@ -2,6 +2,7 @@
 import { useState, type SubmitEvent, type ChangeEvent, use } from "react";
 import { apiFetch, type AuthResponse } from "../utils/api";
 import { saveSession } from "../utils/session";
+import ForgotPassword from "./ForgotPassword";
 const API = import.meta.env.VITE_API_URL;
 
 function startSession ({token, user}: AuthResponse): void {
@@ -293,6 +294,15 @@ export default function LoginPage() {
             </div>
           )}
           </span>
+          <footer className="mt-4 fw-bold">Forgot Password? 
+            <button
+            type="button"
+            style={{border: 'none'}}
+            onClick={() => window.location.href = '/forgotpassword'}
+            >
+              Reset Here.
+            </button>
+          </footer>
         </div>
       </main>
 
