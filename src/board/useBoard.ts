@@ -174,6 +174,15 @@ export function useBoard(boardId: string, onAuthError: () => void) {
     [board, boardId, track, fail],
   );
 
+  /** Owner only: givers another user access to the board. */
+  const addBoardUser = useCallback(
+    async(userId: string) => {
+      const {board: saved} = await track(api.addBoardUser(boardId, userId));
+      setBoard(saved);
+    },
+    [boardId, track],
+  );
+
   /**
    * The API only deletes an empty board, so every item (notes, media,
    * stickers and reminders) is deleted first, then the board itself.
@@ -225,6 +234,7 @@ export function useBoard(boardId: string, onAuthError: () => void) {
     updateItem,
     removeItem,
     updateBoard,
+    addBoardUser,
     deleteBoard,
   };
 }
