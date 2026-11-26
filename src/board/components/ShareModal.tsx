@@ -11,8 +11,8 @@ interface Props {
   /** a request came back 401: the token is missing, invalid or expired */
   onAuthError: () => void;
   /**
-   * Gives the found user edit access to the board. The backend has no endpoint
-   * for this yet.
+   * Only passed to the owner of the board.
+   * For everyone else, the button is disabled with a note.
    */
   onGrantAccess?: (user: User) => Promise<void>;
 }
@@ -145,7 +145,7 @@ export default function ShareModal({ board, currentUser, onClose, onAuthError, o
         )}
         {found && !isSelf && !hasAccess && !onGrantAccess && (
           <p className="small text-body-secondary mt-2 mb-0">
-            Sorry, this service is currently unavailable.
+            Only the board's owner can add users.
           </p>
         )}
         {lookup.state === 'not-found' && (

@@ -510,8 +510,8 @@ function BoardView({ boardId, user, onHome, onSignOut, onAuthError }: ViewProps)
       {remindersOpen && <div className="pb-scrim d-xl-none" onClick={() => setRemindersOpen(false)} />}
 
       {modal === 'share' && (
-        // No onGrantAccess yet: the backend has no endpoint that adds a user to a board.
-        <ShareModal board={board} currentUser={user} onClose={() => setModal(null)} onAuthError={onAuthError} />
+        // Owner Only
+        <ShareModal board={board} currentUser={user} onClose={() => setModal(null)} onAuthError={onAuthError} onGrantAccess={isOwner ? (u) => b.addBoardUser(u.id) : undefined} />
       )}
       {modal === 'settings' && (
         <SettingsModal

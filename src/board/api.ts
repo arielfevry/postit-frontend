@@ -69,6 +69,9 @@ export const api = {
   /** Owner only. The server refuses (409) while the board still has items. */
   deleteBoard: (boardId: string) => request<void>(`/boards/${boardId}`, { method: 'DELETE' }),
 
+  /** Owner only. Gives another user access to the board. */
+  addBoardUser: (boardId: string, userId: string) => request<{ board: Board }>(`/boards/${boardId}/users`, {method: 'POST', body: { userId } }),
+
   listBoards: () => request<{boards: Board[]}>(`/boards`, {method: 'GET'}),
 
   /* ----- users: /api/users ----- */
