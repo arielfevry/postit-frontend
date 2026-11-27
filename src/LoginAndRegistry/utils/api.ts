@@ -72,4 +72,19 @@ export const api = {
             method: 'POST',
             body:{ token, password }
           }),
+
+    // Emails a verification link (EMAIL_VERIFICATION_URL?token=...) to an unverified account.
+    // Always answers 202 with the same message, whether or not the account exists.
+    resendVerification: (email: string) =>
+        apiFetch<{message: string}>('/api/resend-verification', {
+          method: 'POST',
+          body: {email}
+        }),
+
+    // Verifies the account that the emailed link's token belongs to. 400 if invalid or expired.
+    verifyEmail: (token: string) =>
+        apiFetch<{message: string}>('/api/verify-email', {
+          method: 'POST',
+          body: {token}
+        }),
 }
