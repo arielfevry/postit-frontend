@@ -3,6 +3,7 @@ import { useState, type SubmitEvent, type ChangeEvent, use } from "react";
 import { apiFetch, type AuthResponse } from "../utils/api";
 import { saveSession } from "../utils/session";
 import ForgotPassword from "./ForgotPassword";
+import { rememberEmailForVerification } from "./VerifyEmail";
 const API = import.meta.env.VITE_API_URL;
 
 function startSession ({token, user}: AuthResponse): void {
@@ -82,11 +83,10 @@ export default function LoginPage() {
       if(!res.ok){
         setMessage(res.error ?? "Failed Registration. Please try again.");
       }else { 
-        startSession(res.data);
-        setSuccessMessage("Account Created Succesfully. Logging in...");
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1000);
+        // New accounts must verify their email before using PostIt!, so no session is started here.
+        // /verify-email sends the verification email as soon as it opens.
+        rememberEmailForVerification(regEmail);
+        window.location.href = "/verify-email";
       }
     } catch (error: unknown) {
       setMessage((error as Error).toString());
